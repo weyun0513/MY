@@ -1,0 +1,14 @@
+
+package b2bankc.servlet;
+import java.io.File;import java.io.IOException;
+import javax.servlet.*;import javax.servlet.http.*;import com.jspsmart.upload.*;
+public class download extends HttpServlet {
+ private ServletConfig config;
+ // Init the servlet final public void init(ServletConfig config) throws ServletException {  this.config = config; } // final public ServletConfig getServletConfig() {  return config; } // public void  destroy () {}
+ // GET requests - same as POST public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {  doPost(req, res); }
+ // POST requests protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException { // HttpSession session=req.getSession(true); // loginopt loginuser =(loginopt)session.getValue("LoginEDI"); // Environment appenv  =(Environment)session.getValue("AppEnv");  // Variables      if(! check (   req,   res)){   return;  }    SmartUpload mySmartUpload = new SmartUpload();  try {  // String file=loginuser.getEDIFileName();    // String filePath=appenv.getString("eoic.downloadpath")+file;   String filePath=req.getParameter("filename");  //路徑名稱      String outputname=req.getParameter("outputname"); //下載檔名   // Initialization   mySmartUpload.initialize(config, req, res);
+   // Set Content Disposition Hearders for the MIME Type   // values: "inline;"-default, "attachment;"   mySmartUpload.setContentDisposition("attachment;");
+   // Download file//   mySmartUpload.downloadFile("/download/test.txt");
+   // With a physical path//   mySmartUpload.downloadFile("c:\\temp\\sample.zip");
+   // With options   //getServletContext().getRequestDispatcher("b2bank/c0401/040102q.jsp").forward(req,res);   if(outputname==null||outputname.equals("")){    mySmartUpload.downloadFile(filePath, "application/x-please-send-files", "test.txt");   }else{    mySmartUpload.downloadFile(filePath, "application/x-please-send-files", new String(outputname.getBytes(),"8859_1"));   }
+  } catch (Exception e){}    }  private  boolean check( HttpServletRequest req, HttpServletResponse res  ) throws ServletException, IOException{  // 黑箱掃瞄弱點 ，會直接 下載 root 的 etc password 檔案，作為ATTACK     //檢查下載路徑  String filePath=req.getParameter("filename");//路徑名稱  File f=new File(filePath);  File dir=f.getParentFile();  String dirPath=dir.getAbsolutePath();    if(!dirPath.startsWith("/vab") && !dirPath.startsWith("/srcbak") && !dirPath.startsWith("/b2bank")){   res.getWriter().write("Download Warning : illegal dirPath["+dirPath+"]");   return false;  }     //加強版  檢查有無合法登入, 未登入直接以網址列下載需檢出，若再掃到，下一段才開啟   /*HttpSession session=req.getSession();   Object isLogin =   session.getAttribute("B2BANK.ISLOGIN");//b2bank   Object  loginCheck =   session.getAttribute("ts.adm.login");//adm     if (isLogin == null && loginCheck==null) {      res.getWriter().write("Download Warning : Please Follow Page Operation!!");   return false;   }*/     return true;   }  }
